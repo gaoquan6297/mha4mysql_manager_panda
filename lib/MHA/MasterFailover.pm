@@ -1624,8 +1624,11 @@ sub recover_master($$$$) {
     $new_master->get_hostinfo() . ": OK: Applying all logs succeeded.\n";
 
   if ( $new_master->{master_ip_failover_script} ) {
+# append proxysql arguments to master_ip_failover script by gaoquan
+# begin 
     my $command =
 "$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user} --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+# end
     $command .=
       $dead_master->get_ssh_args_if( 1, "orig", $_real_ssh_reachable );
     $command .= $new_master->get_ssh_args_if( 2, "new", 1 );
