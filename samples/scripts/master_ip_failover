@@ -25,11 +25,14 @@ use warnings FATAL => 'all';
 use Getopt::Long;
 use MHA::DBHelper;
 
+# add proxysql message info by gaoquan
+# begin
 my (
   $command,        $ssh_user,         $orig_master_host,
   $orig_master_ip, $orig_master_port, $new_master_host,
   $new_master_ip,  $new_master_port,  $new_master_user,
-  $new_master_password
+  $new_master_password,  $proxy_admin_user, $proxy_admin_passwd,
+  $proxy_admin_port
 );
 GetOptions(
   'command=s'             => \$command,
@@ -42,7 +45,11 @@ GetOptions(
   'new_master_port=i'     => \$new_master_port,
   'new_master_user=s'     => \$new_master_user,
   'new_master_password=s' => \$new_master_password,
+  'proxy_admin_user=s'      => \$proxy_admin_user,
+  'proxy_admin_passwd=s'    => \$proxy_admin_passwd,
+  'proxy_admin_port=i'      => \$proxy_admin_port,
 );
+# end
 
 exit &main();
 
@@ -81,7 +88,12 @@ sub main {
       ## Set read_only=0 on the new master
       $new_master_handler->disable_log_bin_local();
       print "Set read_only=0 on the new master.\n";
+      print "remove orig_master from proxysql server";
+      # add by gaoquan
+      # begin
+      &proxy_server_manager();
       $new_master_handler->disable_read_only();
+      # end
 
       ## Creating an app user on the new master
       print "Creating app user on the new master..\n";
@@ -111,6 +123,11 @@ sub main {
     &usage();
     exit 1;
   }
+}
+
+sub proxy_server_manager {
+  my $sql = "/usr/local/mysql/bin/mysql -h127.0.0.1 -P$proxy_admin_port -u$proxy_admin_user -p$proxy_admin_passwd -e \\\"delete from mysql_servers  where hostname='$orig_master_ip';save mysql servers to disk; load mysql servers to runtime;\\\"";
+  `ssh mha\@$new_master_host \" $sql \"`;
 }
 
 sub usage {
