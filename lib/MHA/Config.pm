@@ -29,9 +29,9 @@ use Log::Dispatch;
 use MHA::Server;
 use MHA::NodeUtil;
 use MHA::ManagerConst;
-
+# Add proxysql message info like add proxy_admin_user proxy_admin_passwd proxy_admin_por
 my @PARAM_ARRAY =
-  qw/ hostname ip port ssh_host ssh_ip ssh_port ssh_connection_timeout ssh_options node_label candidate_master no_master ignore_fail skip_init_ssh_check skip_reset_slave user password repl_user repl_password disable_log_bin master_pid_file handle_raw_binlog ssh_user remote_workdir master_binlog_dir log_level manager_workdir manager_log check_repl_delay check_repl_filter latest_priority multi_tier_slave ping_interval ping_type secondary_check_script master_ip_failover_script master_ip_online_change_script shutdown_script report_script init_conf_load_script client_bindir client_libdir use_gtid_auto_pos/;
+  qw/ add proxy_admin_user proxy_admin_passwd proxy_admin_por hostname ip port ssh_host ssh_ip ssh_port ssh_connection_timeout ssh_options node_label candidate_master no_master ignore_fail skip_init_ssh_check skip_reset_slave user password repl_user repl_password disable_log_bin master_pid_file handle_raw_binlog ssh_user remote_workdir master_binlog_dir log_level manager_workdir manager_log check_repl_delay check_repl_filter latest_priority multi_tier_slave ping_interval ping_type secondary_check_script master_ip_failover_script master_ip_online_change_script shutdown_script report_script init_conf_load_script client_bindir client_libdir use_gtid_auto_pos/;
 my %PARAM;
 for (@PARAM_ARRAY) { $PARAM{$_} = 1; }
 
@@ -57,6 +57,25 @@ sub parse_server {
       croak "Parameter name $key is invalid!\n";
     }
   }
+
+  # add add proxy_admin_user proxy_admin_passwd proxy_admin_port
+  # begin
+  $value{proxy_admin_user} = $param_arg->{proxy_admin_user};
+  if ( !defined( $value{proxy_admin_user})) {
+    $value{proxy_admin_user} = $default->{proxy_admin_user};
+    $value{proxy_admin_user} = 'admin' unless ( $value{proxy_admin_user} );
+  }
+  $value{proxy_admin_passwd} = $param_arg->{proxy_admin_passwd};
+  if ( !defined( $value{proxy_admin_passwd})) {
+    $value{proxy_admin_passwd} = $default->{proxy_admin_passwd};
+    $value{proxy_admin_passwd} = 'admin' unless ( $value{proxy_admin_passwd} );
+  }
+  $value{proxy_admin_port} = $param_arg->{proxy_admin_port};
+  if ( !defined( $value{proxy_admin_port})) {
+    $value{proxy_admin_port} = $default->{proxy_admin_port};
+    $value{proxy_admin_port} = 6032 unless ( $value{proxy_admin_port} );
+  }
+  # end
 
   $value{hostname} = $param_arg->{hostname};
   $value{ip}       = $param_arg->{ip};
