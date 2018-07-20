@@ -39,6 +39,12 @@ use File::Basename;
 use Parallel::ForkManager;
 use Sys::Hostname;
 
+# add proxy message info by gaoquan
+# begin
+my $g_proxy_admin_user;
+my $g_proxy_admin_passwd;
+my $g_proxy_admin_port;
+# end
 my $g_global_config_file = $MHA::ManagerConst::DEFAULT_GLOBAL_CONF;
 my $g_config_file;
 my $g_new_master_host;
@@ -119,6 +125,34 @@ sub init_config() {
   $log =
     MHA::ManagerUtil::init_log( $g_logfile, $servers_config[0]->{log_level} );
   $log->info("MHA::MasterFailover version $MHA::ManagerConst::VERSION.");
+
+  # begin add by gaoquan
+  unless ($g_proxy_admin_user) {
+    if ( $servers_config[0]->{proxy_admin_user}) {
+      $g_proxy_admin_user = $servers_config[0]->{proxy_admin_user};
+    }
+    else {
+      $g_proxy_admin_user = "admin";
+    }
+  }
+  unless ($g_proxy_admin_passwd) {
+    if ( $servers_config[0]->{proxy_admin_passwd}) {
+      $g_proxy_admin_passwd = $servers_config[0]->{proxy_admin_passwd};
+    }
+    else {
+      $g_proxy_admin_passwd = "admin";
+    }
+  }
+
+  unless ($g_proxy_admin_port) {
+    if ( $servers_config[0]->{proxy_admin_port}) {
+      $g_proxy_admin_port = $servers_config[0]->{proxy_admin_port};
+    }
+    else {
+      $g_proxy_admin_port = 6032;
+    }
+  }
+  # end
 
   unless ($g_workdir) {
     if ( $servers_config[0]->{manager_workdir} ) {
@@ -1591,7 +1625,7 @@ sub recover_master($$$$) {
 
   if ( $new_master->{master_ip_failover_script} ) {
     my $command =
-"$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user}";
+"$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user} --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
     $command .=
       $dead_master->get_ssh_args_if( 1, "orig", $_real_ssh_reachable );
     $command .= $new_master->get_ssh_args_if( 2, "new", 1 );
