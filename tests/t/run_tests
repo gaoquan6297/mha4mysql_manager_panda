@@ -1,0 +1,71 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings FATAL => 'all';
+
+use Getopt::Long;
+use File::Copy;
+
+my $mysql_version;
+my $use_row_format;
+my $use_gtid_auto_pos;
+my $init_script;
+my $custom_clients = "no";
+my $tests;
+GetOptions(
+  'mysql_version=s' => \$mysql_version,
+  'use_row_format'  => \$use_row_format,
+  'use_gtid_auto_pos' => \$use_gtid_auto_pos,
+  'init_script=s'   => \$init_script,
+  'custom_clients=s' => \$custom_clients,
+  'tests=s'         => \$tests,
+);
+
+if ($mysql_version) {
+  $ENV{'VERSION'} = $mysql_version;
+  my $version_dir = $mysql_version;
+  $version_dir =~ s/\./_/g;
+  $ENV{'VERSION_DIR'} = $version_dir;
+}
+if ($use_row_format) {
+  $ENV{'USE_ROW_FORMAT'} = "1";
+}
+else {
+  $ENV{'USE_ROW_FORMAT'} = "";
+}
+
+if ($use_gtid_auto_pos) {
+  $ENV{'USE_GTID_AUTO_POS'} = "1";
+}
+else {
+  $ENV{'USE_GTID_AUTO_POS'} = "";
+}
+
+if ($init_script) {
+  $ENV{'INIT_SCRIPT'} = $init_script;
+}else {
+  $ENV{'INIT_SCRIPT'} = "";
+}
+unless ($tests) {
+  $tests= "*";
+}
+$ENV{'CUSTOM_CLIENTS'}=$custom_clients;
+
+
+
+my @test_files = `ls t_$tests.sh`;
+foreach my $test_file (@test_files) {
+  chomp($test_file);
+  my $rc = system("sh $test_file");
+
+  # copy logs for analysys
+  if ($rc) {
+    my @log_files = `ls *.log`;
+    foreach my $log (@log_files) {
+      chomp($log);
+      next if ( $log =~ /^t_/ );
+      move $log, "$test_file.$mysql_version.$log";
+    }
+  }
+}
+
