@@ -98,12 +98,12 @@ sub main {
 
       ## Creating an app user on the new master
       print "Creating app user on the new master..\n";
-      FIXME_xxx_create_user( $new_master_handler->{dbh} );
+      #FIXME_xxx_create_user( $new_master_handler->{dbh} );
       $new_master_handler->enable_log_bin_local();
       $new_master_handler->disconnect();
 
       ## Update master ip on the catalog database, etc
-      FIXME_xxx;
+      #FIXME_xxx;
 
       $exit_code = 0;
     };
@@ -141,7 +141,6 @@ sub proxy_server_manager {
     $sth->finish;
   }
   $dbh->disconnect();
-  }
 
 }
 
