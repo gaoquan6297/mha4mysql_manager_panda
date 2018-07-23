@@ -37,6 +37,12 @@ use MHA::ManagerUtil;
 use File::Basename;
 use Parallel::ForkManager;
 
+# add proxy message info by gaoquan
+# begin
+my $g_proxy_admin_user;
+my $g_proxy_admin_passwd;
+my $g_proxy_admin_port;
+# end
 my $g_global_config_file = $MHA::ManagerConst::DEFAULT_GLOBAL_CONF;
 my $g_config_file;
 my $g_check_only;
@@ -71,6 +77,34 @@ sub identify_orig_master() {
   )->read_config();
   my @servers_config = @$sc_ref;
   $log = MHA::ManagerUtil::init_log( undef, $servers_config[0]->{log_level} );
+
+    # begin add by gaoquan
+  unless ($g_proxy_admin_user) {
+    if ( $servers_config[0]->{proxy_admin_user}) {
+      $g_proxy_admin_user = $servers_config[0]->{proxy_admin_user};
+    }
+    else {
+      $g_proxy_admin_user = "admin";
+    }
+  }
+  unless ($g_proxy_admin_passwd) {
+    if ( $servers_config[0]->{proxy_admin_passwd}) {
+      $g_proxy_admin_passwd = $servers_config[0]->{proxy_admin_passwd};
+    }
+    else {
+      $g_proxy_admin_passwd = "admin";
+    }
+  }
+
+  unless ($g_proxy_admin_port) {
+    if ( $servers_config[0]->{proxy_admin_port}) {
+      $g_proxy_admin_port = $servers_config[0]->{proxy_admin_port};
+    }
+    else {
+      $g_proxy_admin_port = 6032;
+    }
+  }
+  # end
 
   unless ($g_workdir) {
     if ( $servers_config[0]->{manager_workdir} ) {
@@ -418,6 +452,8 @@ sub switch_master($$$$) {
       "  $command --orig_master_password=xxx --new_master_password=xxx");
     $command .=
 " --orig_master_password=$orig_master->{escaped_password} --new_master_password=$new_master->{escaped_password}";
+    $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+
     my ( $high, $low ) = MHA::ManagerUtil::exec_system($command);
 
     if ( $high == 0 && $low == 0 ) {
