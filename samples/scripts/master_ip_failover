@@ -22,6 +22,7 @@
 use strict;
 use warnings FATAL => 'all';
 
+use DBI;
 use Getopt::Long;
 use MHA::DBHelper;
 
@@ -91,7 +92,7 @@ sub main {
       print "remove orig_master from proxysql server";
       # add by gaoquan
       # begin
-      &proxy_server_manager();
+      proxy_server_manager();
       $new_master_handler->disable_read_only();
       # end
 
@@ -126,8 +127,22 @@ sub main {
 }
 
 sub proxy_server_manager {
-  my $sql = "/usr/local/mysql/bin/mysql -h127.0.0.1 -P$proxy_admin_port -u$proxy_admin_user -p$proxy_admin_passwd -e \\\"delete from mysql_servers  where hostname='$orig_master_ip';save mysql servers to disk; load mysql servers to runtime;\\\"";
-  `ssh mha\@$new_master_host \" $sql \"`;
+#  my $sql = "/usr/local/mysql/bin/mysql -h127.0.0.1 -P$proxy_admin_port -u$proxy_admin_user -p$proxy_admin_passwd -e \\\"delete from mysql_servers  where hostname='$orig_master_ip';save mysql servers to disk; load mysql servers to runtime;\\\"";
+#  `ssh mha\@$new_master_host \" $sql \"`;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master_host;port=$proxy_admin_port",$proxy_admin_user,$proxy_admin_passwd) or die $DBI::errstr;
+  my @sql = (
+    qq{delete from mysql_servers where hostname=\'$orig_master_host\';},
+    qq{save mysql servers to disk;},
+    qq{load mysql servers to runtime;},
+  );
+  for (@sql) {
+    my $sth = $dbh->prepare($_);
+    $sth->execute or die $dbh->errstr;
+    $sth->finish;
+  }
+  $dbh->disconnect();
+  }
+
 }
 
 sub usage {
