@@ -26,9 +26,9 @@ See https://github.com/yoshinorim/mha4mysql-manager/wiki for details.
 ## mysql mha用户所需要的权限整理
 ```
 create user mha@'mha4mysql-manager节点以及远程检测节点';
-GRANT RELOAD, SUPER ON *.* TO 'mha'@'10.110.%' ;
-GRANT INSERT, UPDATE ON `infra`.* TO 'mha'@'10.110.%' ;
-GRANT SELECT ON `mysql`.* TO 'mha'@'10.110.%' ;
+GRANT RELOAD, SUPER ON *.* TO 'mha'@'192.168.%' ;
+GRANT INSERT, UPDATE ON `infra`.* TO 'mha'@'192.168.%' ;
+GRANT SELECT ON `mysql`.* TO 'mha'@'192.168.%' ;
 ```
 ## app config file 增加proxy
 ```
