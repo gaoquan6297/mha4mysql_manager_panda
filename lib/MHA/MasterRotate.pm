@@ -36,6 +36,10 @@ use MHA::Server;
 use MHA::ManagerUtil;
 use File::Basename;
 use Parallel::ForkManager;
+# add by gaoquan
+# begin
+use DBI;
+# end
 
 # add proxy message info by gaoquan
 # begin
@@ -754,9 +758,9 @@ sub handle_sigint {
 # 增加proxysql 处理逻辑
 sub proxy_server_manager {
 
-  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master_host;port=$proxy_admin_port",$proxy_admin_user,$proxy_admin_passwd) or die $DBI::errstr;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$g_new_master_host;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
   my @sql = (
-    qq{delete from mysql_servers where hostname=\'$orig_master_host\';},
+    qq{delete from mysql_servers where hostname=\'$orig_master\';},
     qq{save mysql servers to disk;},
     qq{load mysql servers to runtime;},
   );
