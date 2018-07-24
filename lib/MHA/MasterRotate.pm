@@ -445,6 +445,11 @@ sub switch_master($$$$) {
     if ($g_orig_master_is_new_slave) {
       $command .= " --orig_master_is_new_slave";
     }
+    # if orig_master not slave ,remote it from proxysql
+    else {
+      $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+    }
+    # end
     $log->info(
 "Executing master ip online change script to allow write on the new master:"
     );
@@ -452,7 +457,6 @@ sub switch_master($$$$) {
       "  $command --orig_master_password=xxx --new_master_password=xxx");
     $command .=
 " --orig_master_password=$orig_master->{escaped_password} --new_master_password=$new_master->{escaped_password}";
-    $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
 
     my ( $high, $low ) = MHA::ManagerUtil::exec_system($command);
 
