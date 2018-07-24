@@ -22,6 +22,7 @@
 use strict;
 use warnings FATAL => 'all';
 
+use DBI;
 use Getopt::Long;
 use MHA::DBHelper;
 use MHA::NodeUtil;
