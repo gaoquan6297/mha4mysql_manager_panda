@@ -1,5 +1,7 @@
 ## mha wiki
+```
 See https://github.com/yoshinorim/mha4mysql-manager/wiki for details.
+```
 ## mha 集成proxysql
 1. 自动切换发生时，调用master_ip_failover script删除proxysql 中的old master
 2. 手动切换时，old master指定dead删除proxysql 中的old master
