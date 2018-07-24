@@ -19,9 +19,9 @@ See https://github.com/yoshinorim/mha4mysql-manager/wiki for details.
 ```
 1. 当ping_type为insert时，不去创建检测依赖的数据库和表结构，减少mha权限
 2. 前提是在mysql提前执行以下SQL
-   ﻿create database infra;
-    use infra;
-    CREATE TABLE IF NOT EXISTS infra.chk_masterha (`key` tinyint NOT NULL primary key,`val` int(10) unsigned NOT NULL DEFAULT '0');
+create database infra;
+use infra;
+CREATE TABLE IF NOT EXISTS infra.chk_masterha (`key` tinyint NOT NULL primary key,`val` int(10) unsigned NOT NULL DEFAULT '0');
 ```
 ## mysql mha用户所需要的权限整理
 ```
