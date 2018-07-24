@@ -30,7 +30,7 @@ GRANT RELOAD, SUPER ON *.* TO 'mha'@'10.110.%' ;
 GRANT INSERT, UPDATE ON `infra`.* TO 'mha'@'10.110.%' ;
 GRANT SELECT ON `mysql`.* TO 'mha'@'10.110.%' ;
 ```
-## app config file 增加proxy信息
+## app config file 增加proxy
 ```
 [server default]
 proxy_admin_user=remote_admin
