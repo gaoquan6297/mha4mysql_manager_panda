@@ -26,3 +26,10 @@ proxy_admin_user=remote_admin
 proxy_admin_passwd=admin
 proxy_admin_port=6032
 
+## 主要修改的源码列表
+1. HealthCheck.pm
+2. MasterFailover.pm
+3. MasterRotate.pm
+4. Config.pm
+5. master_ip_failover
+6. master_ip_online_change
