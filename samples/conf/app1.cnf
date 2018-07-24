@@ -5,6 +5,7 @@ proxy_admin_user=admin
 proxy_admin_passwd=admin
 proxy_admin_port=6032
 master_ip_failover_script="/usr/local/masterha/bin/master_ip_failover"
+master_ip_online_change_script="/usr/local/masterha/bin/master_ip_online_change"
 
 [server1]
 hostname=host1
