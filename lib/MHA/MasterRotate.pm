@@ -446,9 +446,9 @@ sub switch_master($$$$) {
       $command .= " --orig_master_is_new_slave";
     }
     # if orig_master not slave ,remote it from proxysql
-    else {
-      $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
-    }
+    # else {
+    #   $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+    # }
     # end
     $log->info(
 "Executing master ip online change script to allow write on the new master:"
@@ -680,6 +680,16 @@ sub do_master_online_switch {
       switch_master( $orig_master, $new_master, $orig_master_log_file,
       $orig_master_log_pos );
 
+    # add by gaoquan
+    if ($g_orig_master_is_new_slave) {
+      $log->info("proxysql server do nothing!");
+    }
+    else {
+      $log->info("proxysql remove $orig_master");
+      proxy_server_manager();
+    }
+
+    # end
     $error_code =
       switch_slaves( $orig_master, $new_master, $orig_master_log_file,
       $orig_master_log_pos, $master_log_file, $master_log_pos );
@@ -739,6 +749,24 @@ sub handle_sigint {
     exit 0;
   }
   exit 1;
+}
+
+# 增加proxysql 处理逻辑
+sub proxy_server_manager {
+
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master_host;port=$proxy_admin_port",$proxy_admin_user,$proxy_admin_passwd) or die $DBI::errstr;
+  my @sql = (
+    qq{delete from mysql_servers where hostname=\'$orig_master_host\';},
+    qq{save mysql servers to disk;},
+    qq{load mysql servers to runtime;},
+  );
+  for (@sql) {
+    my $sth = $dbh->prepare($_);
+    $sth->execute or die $dbh->errstr;
+    $sth->finish;
+  }
+  $dbh->disconnect();
+
 }
 
 sub main {
