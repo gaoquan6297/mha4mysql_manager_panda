@@ -690,7 +690,7 @@ sub do_master_online_switch {
     }
     else {
       $log->info("proxysql remove $orig_master");
-      proxy_server_manager();
+      proxy_server_manager($orig_master,$new_master);
     }
 
     # end
@@ -756,9 +756,11 @@ sub handle_sigint {
 }
 
 # 增加proxysql 处理逻辑
-sub proxy_server_manager {
+sub proxy_server_manager($$) {
 
-  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$g_new_master_host;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my $orig_master          = shift;
+  my $new_master           = shift;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
   my @sql = (
     qq{delete from mysql_servers where hostname=\'$orig_master\';},
     qq{save mysql servers to disk;},
