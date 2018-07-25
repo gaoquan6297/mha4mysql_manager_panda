@@ -1627,7 +1627,8 @@ sub recover_master($$$$) {
 # append proxysql arguments to master_ip_failover script by gaoquan
 # begin 
     my $command =
-"$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user} --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+# "$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user} --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
+"$new_master->{master_ip_failover_script} --command=start --ssh_user=$new_master->{ssh_user} --orig_master_host=$dead_master->{hostname} --orig_master_ip=$dead_master->{ip} --orig_master_port=$dead_master->{port} --new_master_host=$new_master->{hostname} --new_master_ip=$new_master->{ip} --new_master_port=$new_master->{port} --new_master_user=$new_master->{escaped_user}";
 # end
     $command .=
       $dead_master->get_ssh_args_if( 1, "orig", $_real_ssh_reachable );
@@ -2198,6 +2199,10 @@ sub do_master_failover {
       $master_log_file, $master_log_pos, $exec_gtid_set
     );
 
+    # add by haoquan
+    $log->info("* Phase 5: Proxysql remove $dead_master->{hostname}.\ ");
+    proxy_server_manager($dead_master, $new_master);
+
     if ( $g_remove_dead_master_conf && $error_code == 0 ) {
       MHA::Config::delete_block_and_save( $g_config_file, $dead_master->{id},
         $log );
@@ -2257,6 +2262,26 @@ sub finalize_on_error {
       "Got Error on finalize_on_error at failover: $@", $log );
     undef $@;
   }
+
+}
+
+# 增加proxysql 处理逻辑
+sub proxy_server_manager($$) {
+
+  my $dead_master          = shift;
+  my $new_master           = shift;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master->{hostname};port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my @sql = (
+    qq{delete from mysql_servers where hostname=\'$dead_master->{hostname}\';},
+    qq{save mysql servers to disk;},
+    qq{load mysql servers to runtime;},
+  );
+  for (@sql) {
+    my $sth = $dbh->prepare($_);
+    $sth->execute or die $dbh->errstr;
+    $sth->finish;
+  }
+  $dbh->disconnect();
 
 }
 
