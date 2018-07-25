@@ -686,10 +686,10 @@ sub do_master_online_switch {
 
     # add by gaoquan
     if ($g_orig_master_is_new_slave) {
-      $log->info("proxysql server do nothing!");
+      $log->info("proxysql server do nothing!\n");
     }
     else {
-      $log->info("proxysql remove $orig_master");
+      $log->info("proxysql remove $orig_master->{hostname}.\n");
       proxy_server_manager($orig_master,$new_master);
     }
 
@@ -760,9 +760,9 @@ sub proxy_server_manager($$) {
 
   my $orig_master          = shift;
   my $new_master           = shift;
-  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master->{hostname};port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
   my @sql = (
-    qq{delete from mysql_servers where hostname=\'$orig_master\';},
+    qq{delete from mysql_servers where hostname=\'$orig_master->{hostname}\';},
     qq{save mysql servers to disk;},
     qq{load mysql servers to runtime;},
   );
