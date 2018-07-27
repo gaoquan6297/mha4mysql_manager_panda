@@ -449,11 +449,6 @@ sub switch_master($$$$) {
     if ($g_orig_master_is_new_slave) {
       $command .= " --orig_master_is_new_slave";
     }
-    # if orig_master not slave ,remote it from proxysql
-    # else {
-    #   $command .= " --proxy_admin_user=$g_proxy_admin_user --proxy_admin_passwd=$g_proxy_admin_passwd --proxy_admin_port=$g_proxy_admin_port";
-    # }
-    # end
     $log->info(
 "Executing master ip online change script to allow write on the new master:"
     );
@@ -684,19 +679,20 @@ sub do_master_online_switch {
       switch_master( $orig_master, $new_master, $orig_master_log_file,
       $orig_master_log_pos );
 
-    # add by gaoquan
-    if ($g_orig_master_is_new_slave) {
-      $log->info("proxysql server do nothing!\n");
-    }
-    else {
-      $log->info("proxysql remove $orig_master->{hostname}.\n");
-      proxy_server_manager($orig_master,$new_master);
-    }
 
-    # end
     $error_code =
       switch_slaves( $orig_master, $new_master, $orig_master_log_file,
       $orig_master_log_pos, $master_log_file, $master_log_pos );
+
+    # add by gaoquan
+    if ($g_orig_master_is_new_slave) {
+      $log->info("##############  proxysql server do nothing!\n");
+    }
+    else {
+      $log->info("##############  proxysql remove $orig_master->{hostname}.\n");
+      proxy_server_manager($orig_master,$new_master);
+    }
+    # end
 
     if ( $g_remove_orig_master_conf
       && !$g_orig_master_is_new_slave
@@ -764,12 +760,13 @@ sub proxy_server_manager($$) {
   my @sql = (
     qq{delete from mysql_servers where hostname=\'$orig_master->{hostname}\';},
     qq{save mysql servers to disk;},
-    qq{load mysql servers to runtime;},
+    qq{load mysql servers to runtime;}
   );
   for (@sql) {
     my $sth = $dbh->prepare($_);
     $sth->execute or die $dbh->errstr;
     $sth->finish;
+    $log->info("############Execute $_ on  $new_master->{hostname};\n");
   }
   $dbh->disconnect();
 
