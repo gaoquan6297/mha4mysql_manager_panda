@@ -36,17 +36,7 @@ use MHA::Server;
 use MHA::ManagerUtil;
 use File::Basename;
 use Parallel::ForkManager;
-# add by gaoquan
-# begin
-use DBI;
-# end
 
-# add proxy message info by gaoquan
-# begin
-my $g_proxy_admin_user;
-my $g_proxy_admin_passwd;
-my $g_proxy_admin_port;
-# end
 my $g_global_config_file = $MHA::ManagerConst::DEFAULT_GLOBAL_CONF;
 my $g_config_file;
 my $g_check_only;
@@ -82,33 +72,6 @@ sub identify_orig_master() {
   my @servers_config = @$sc_ref;
   $log = MHA::ManagerUtil::init_log( undef, $servers_config[0]->{log_level} );
 
-    # begin add by gaoquan
-  unless ($g_proxy_admin_user) {
-    if ( $servers_config[0]->{proxy_admin_user}) {
-      $g_proxy_admin_user = $servers_config[0]->{proxy_admin_user};
-    }
-    else {
-      $g_proxy_admin_user = "admin";
-    }
-  }
-  unless ($g_proxy_admin_passwd) {
-    if ( $servers_config[0]->{proxy_admin_passwd}) {
-      $g_proxy_admin_passwd = $servers_config[0]->{proxy_admin_passwd};
-    }
-    else {
-      $g_proxy_admin_passwd = "admin";
-    }
-  }
-
-  unless ($g_proxy_admin_port) {
-    if ( $servers_config[0]->{proxy_admin_port}) {
-      $g_proxy_admin_port = $servers_config[0]->{proxy_admin_port};
-    }
-    else {
-      $g_proxy_admin_port = 6032;
-    }
-  }
-  # end
 
   unless ($g_workdir) {
     if ( $servers_config[0]->{manager_workdir} ) {
@@ -684,16 +647,6 @@ sub do_master_online_switch {
       switch_slaves( $orig_master, $new_master, $orig_master_log_file,
       $orig_master_log_pos, $master_log_file, $master_log_pos );
 
-    # add by gaoquan
-    if ($g_orig_master_is_new_slave) {
-      $log->info("##############  proxysql server do nothing!\n");
-    }
-    else {
-      $log->info("##############  proxysql remove $orig_master->{hostname}.\n");
-      proxy_server_manager($orig_master,$new_master);
-    }
-    # end
-
     if ( $g_remove_orig_master_conf
       && !$g_orig_master_is_new_slave
       && $error_code == 0 )
@@ -749,27 +702,6 @@ sub handle_sigint {
     exit 0;
   }
   exit 1;
-}
-
-# 增加proxysql 处理逻辑
-sub proxy_server_manager($$) {
-
-  my $orig_master          = shift;
-  my $new_master           = shift;
-  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master->{hostname};port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
-  my @sql = (
-    qq{delete from mysql_servers where hostname=\'$orig_master->{hostname}\';},
-    qq{save mysql servers to disk;},
-    qq{load mysql servers to runtime;}
-  );
-  for (@sql) {
-    my $sth = $dbh->prepare($_);
-    $sth->execute or die $dbh->errstr;
-    $sth->finish;
-    $log->info("############Execute $_ on  $new_master->{hostname};\n");
-  }
-  $dbh->disconnect();
-
 }
 
 sub main {

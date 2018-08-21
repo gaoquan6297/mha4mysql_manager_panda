@@ -6,8 +6,7 @@ See https://github.com/yoshinorim/mha4mysql-manager/wiki for details.
 ```
 1. 自动切换发生时，调用master_ip_failover script删除proxysql 中的old master
 2. 手动切换时，old master指定dead删除proxysql 中的old master
-3. 手动切换时，old master指定alive但是没指定orig_master_is_new_slave，删除proxysql 中的old master
-4. 手动切换时，old master指定alive且指定orig_master_is_new_slave，不删除proxysql 中的old master
+3. 手动切换时，old master指定alive且指定orig_master_is_new_slave，不删除proxysql 中的old master
 ```
 ## 支持架构
 ```

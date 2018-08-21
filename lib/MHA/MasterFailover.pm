@@ -2265,22 +2265,69 @@ sub finalize_on_error {
 # 增加proxysql 处理逻辑
 sub proxy_server_manager($$) {
 
-  my $dead_master          = shift;
-  my $new_master           = shift;
-  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master->{hostname};port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my $dead_master          = shift->{hostname};
+  my $new_master           = shift->{hostname};
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
   my @sql = (
-    qq{delete from mysql_servers where hostname=\'$dead_master->{hostname}\';},
+    qq{delete from mysql_servers where hostname=\'$dead_master\';},
     qq{save mysql servers to disk;},
     qq{load mysql servers to runtime;}
   );
   for (@sql) {
+    sleep 1;
     my $sth = $dbh->prepare($_);
     $sth->execute or die $dbh->errstr;
+    if ($sth->err)
+      {
+        log->info("DBI ERROR! : $sth->err : $sth->errstr \n");
+      }
     $sth->finish;
-    $log->info("############Execute $_ on  $new_master->{hostname};\n");
+    $log->info("############Execute $_ on  $new_master;\n");
   }
   $dbh->disconnect();
+  sleep 2;
+  for (get_proxy_alive_mysql($new_master)) {
+    $log->info("Proxysql now contain: ".$_." mysql server\n");
+    $mail_body .= "Proxysql now contain: ".$_." mysql server\n";
+  }
+  my $check_info = check_dead_master_exists_proxy($dead_master,$new_master);
+  $log->info($check_info);
+  $mail_body .= $check_info;
+}
 
+sub get_proxy_alive_mysql($) {
+
+  my $new_master           = shift;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my $sql = "select * from runtime_mysql_servers;";
+  my $sth = $dbh->prepare($sql);
+  $sth->execute or die $dbh->errstr;
+  my @res_array = ();
+  while ( my @row = $sth->fetchrow_array() )  {
+     push(@res_array,"$row[0], $row[1], $row[2], $row[3]");
+  }
+  if ($sth->err)
+    {
+      log->info("DBI ERROR! : $sth->err : $sth->errstr \n"); 
+    }
+  $sth->finish;
+  $dbh->disconnect();
+  return @res_array; 
+}
+
+sub check_dead_master_exists_proxy($$) {
+  my $dead_master          = shift;
+  my $new_master           = shift;
+  my $dbh  = DBI->connect("dbi:mysql:database=main;host=$new_master;port=$g_proxy_admin_port",$g_proxy_admin_user,$g_proxy_admin_passwd) or die $DBI::errstr;
+  my $sql = "select count(*) from runtime_mysql_servers where hostname=\'$dead_master\';";
+  my $sth = $dbh->prepare($sql);
+  $sth->execute or die $dbh->errstr;
+  my $count = $sth->fetchrow_array();
+  if ( $count ){
+    return "Warning: the dead master  $dead_master has not been removed from Proxysql";
+  } else {
+    return "Ok: the dead master $dead_master has been removed from Proxysql";
+  }
 }
 
 sub main {
