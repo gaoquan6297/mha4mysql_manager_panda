@@ -42,6 +42,4 @@ proxy_admin_port=6032
 2. MasterFailover.pm
 3. MasterRotate.pm
 4. Config.pm
-5. master_ip_failover
-6. master_ip_online_change
 ```
